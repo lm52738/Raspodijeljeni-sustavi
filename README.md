@@ -1,2 +1,2 @@
-# 2lab-template
+# kafka-udp-sensors
 
