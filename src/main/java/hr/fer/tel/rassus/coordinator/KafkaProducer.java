@@ -1,4 +1,4 @@
-package hr.fer.tel.rassus.koordinator;
+package hr.fer.tel.rassus.coordinator;
 
 import java.util.Properties;
 
