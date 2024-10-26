@@ -7,6 +7,10 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+/**
+ * The KafkaProducer class handles message production to Kafka topics for the coordinator.
+ * It allows initialization, message sending, and cleanup of the producer.
+ */
 public class KafkaProducer {
 
 	private Producer<String, String> producer;

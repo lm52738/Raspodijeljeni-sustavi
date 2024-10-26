@@ -2,6 +2,11 @@ package hr.fer.tel.rassus.koordinator;
 
 import java.util.Scanner;
 
+/**
+ * The Coordinator class manages the start and stop commands for sensors in a Kafka-based system.
+ * It interacts with the user through the console to initiate or end the process, sending the 
+ * corresponding command messages to a Kafka topic.
+ */
 public class Coordinator {
 	
 	private static final String START = "Start";

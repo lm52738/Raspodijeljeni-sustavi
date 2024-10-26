@@ -11,6 +11,11 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 
 import hr.fer.tel.rassus.senzori.MessageListener;
 
+/**
+ * The KafkaConsumer class handles message consumption from specified Kafka topics.
+ * It initializes and configures a Kafka consumer, continuously polls messages, and
+ * notifies a listener when messages are received.
+ */
 public class KafkaConsumer {
 
 	private static String COMMAND = "Command";

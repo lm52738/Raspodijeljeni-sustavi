@@ -4,6 +4,11 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Map;
 
+/**
+ * The `Reading` class represents a sensor reading with multiple attributes, 
+ * including an ID, a NO2 concentration value, a vector clock for tracking 
+ * distributed events, and a scalar clock.
+ */
 public class Reading implements Serializable {
 	
 	/**

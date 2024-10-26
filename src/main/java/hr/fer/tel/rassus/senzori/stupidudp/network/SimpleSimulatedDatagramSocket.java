@@ -8,13 +8,27 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * A simplified simulated DatagramSocket that mimics network conditions 
+ * by introducing configurable packet loss and delay. This class can be used 
+ * to simulate real-world network conditions for testing purposes.
+ */
 public class SimpleSimulatedDatagramSocket extends DatagramSocket {
 
     private final double lossRate;
     private final int averageDelay;
     private final Random random;
 
-    //use this constructor for the server side (no timeout)
+    /**
+     * Constructor for creating a simulated server-side DatagramSocket.
+     * This constructor binds the socket to a specified port.
+     * 
+     * @param port
+     * @param lossRate
+     * @param averageDelay
+     * @throws SocketException
+     * @throws IllegalArgumentException
+     */
     public SimpleSimulatedDatagramSocket(int port, double lossRate, int averageDelay) throws SocketException, IllegalArgumentException {
         super(port);
         random = new Random();
@@ -22,25 +36,42 @@ public class SimpleSimulatedDatagramSocket extends DatagramSocket {
         this.lossRate = lossRate;
         this.averageDelay = averageDelay;
 
-        //set time to wait for answer
+        // Set time to wait for answer
         super.setSoTimeout(0);
     }
 
-    //use this constructor for the client side (timeout = 4 * averageDelay)
+    /**
+     * Constructor for creating a simulated client-side DatagramSocket.
+     * This constructor does not bind the socket to a specific port.
+     *
+     * @param lossRate
+     * @param averageDelay
+     * @throws SocketException
+     * @throws IllegalArgumentException
+     */
     public SimpleSimulatedDatagramSocket(double lossRate, int averageDelay) throws SocketException, IllegalArgumentException {
         random = new Random();
 
         this.lossRate = lossRate;
         this.averageDelay = averageDelay;
 
-        //set time to wait for answer
+        // Set time to wait for answer
         super.setSoTimeout(4 * averageDelay);
     }
 
+    /**
+     * Sends a datagram packet over the simulated network, introducing potential
+     * packet loss and delay. The method checks if the packet passes the loss rate
+     * threshold before sending.
+     *
+     * @param packet
+     * @throws IOException 
+     */
     @Override
     public void send(DatagramPacket packet) throws IOException {
+        // Check if packet should be sent based on the loss rate.
         if (random.nextDouble() >= lossRate) {
-            //delay is uniformely distributed between 0 and 2*averageDelay
+            // Delay is uniformly distributed between 0 and 2 times the average delay.
             new Thread(new OutgoingDatagramPacket(packet, (long) (2 * averageDelay * random.nextDouble()))).start();
         }
     }

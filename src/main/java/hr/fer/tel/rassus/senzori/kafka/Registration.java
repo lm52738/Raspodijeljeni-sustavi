@@ -3,6 +3,11 @@ package hr.fer.tel.rassus.senzori.kafka;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * The `Registration` class represents a registration of a sensor for 
+ * communication with other sensors.
+ * It includes an ID, an IP address and a port.
+ */
 public class Registration {
 
 	private int id;

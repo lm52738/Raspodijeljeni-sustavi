@@ -48,15 +48,15 @@ public class StupidUDPServer {
             ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
             ObjectInputStream objectInputStream = new ObjectInputStream(byteStream);
 
-            // prima objekt Reading (ocitanje, vektorsku vremensku oznaku, skalarnu vremensku oznaku)
+            // receives a Reading object (including reading, vector clock, and scalar clock)
             Reading receivedReading = (Reading) objectInputStream.readObject(); 
             
             System.out.println("Server received: " + receivedReading.toString());
             
-            // sprema paket - u class Sensor ( messageListener.onUdpMessageReceived(objekt) )
+            // Saves package into class Sensor ( messageListener.onUdpMessageReceived(object) )
             messageListener.onUdpMessageReceived(receivedReading);
             
-            // odgovara sa potvrdom (Boolean) da je primio objekt 
+            // Sends an acknowledgment packet (Boolean)
             ackBuf = Boolean.TRUE.toString().getBytes();            
             System.out.println("Server sends: " + Boolean.TRUE.toString());
 
@@ -72,7 +72,7 @@ public class StupidUDPServer {
     
     public void stopServer() {
         isRunning = false;
-        // Zatvaranje socket-a će prekinuti blokirajući 'receive' poziv i omogućiti zaustavljanje servera
+        // Closing the socket will terminate the blocking 'receive' call and allow the server to stop
         
         socket.close();
         System.out.println("Stopping UDP server...");

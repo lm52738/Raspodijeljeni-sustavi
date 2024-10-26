@@ -30,7 +30,7 @@ public class StupidUDPClient {
     public StupidUDPClient(int port) {
     	try {
 			this.address = InetAddress.getByName("localhost");
-			this.socket = new SimpleSimulatedDatagramSocket(0.3, 1000); //SOCKET
+			this.socket = new SimpleSimulatedDatagramSocket(0.3, 1000);
 			this.port = port;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -48,7 +48,7 @@ public class StupidUDPClient {
 
         byte[] sendData = byteStream.toByteArray();
     	
-        // salje objekt Reading (ocitanje, vektorsku vremensku oznaku, skalarnu vremensku oznaku)
+        // Sends the Reading object (including reading, vector clock, and scalar clock)
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, port);
         socket.send(sendPacket);
         
@@ -59,7 +59,7 @@ public class StupidUDPClient {
         while (true) {
             DatagramPacket ackPacket = new DatagramPacket(rcvBuf, rcvBuf.length);
 
-            // ceka da primi paket potvrde
+            // Waits to receive an acknowledgment packet
             try {
                 socket.receive(ackPacket); 
                 String receivedAck = new String(ackPacket.getData(), ackPacket.getOffset(), ackPacket.getLength());
@@ -80,8 +80,8 @@ public class StupidUDPClient {
 
         }
 
-        // ako nije primio paket potvrde tj. dogodio se SocketTimeoutException
-        // obavlja retransmisiju paketa
+        // If an acknowledgment packet was not received (i.e., a SocketTimeoutException occurred),
+        // retransmits the packet
         if (retransmision.equals(Boolean.TRUE)) {
         	System.out.println("Client retransmision: " + reading.toString());
         	sendMessage(reading);

@@ -9,14 +9,14 @@ public class Main {
 	public static void main(String[] args) {
 		Scanner scanner = new Scanner(System.in);
 		
-		// nakon pokretanja traži upis svog identifikatora i UDP port
-        System.out.println("Unesite ID:");
+		// After starting, prompt the user to enter the sensor's identifier and UDP port
+        System.out.println("Enter Sensor ID:");
         int id = scanner.nextInt();
 
-        System.out.println("Unesite UDP port:");
+        System.out.println("Enter UDP port:");
         int udpPort = scanner.nextInt();
         
-        System.out.println("Unesite broj senzora:");
+        System.out.println("Enter number of sensors:");
         int sensors = scanner.nextInt();
         
         scanner.close();

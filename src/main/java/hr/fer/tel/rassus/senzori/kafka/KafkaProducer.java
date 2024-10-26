@@ -7,6 +7,11 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+/**
+ * The KafkaProducer class is a simple wrapper around Apache Kafka's Producer API
+ * to enable sending messages to a Kafka topic. This class sets up a producer 
+ * with basic configuration, sends messages, and manages the producer lifecycle.
+ */
 public class KafkaProducer {
 
 	private Producer<String, String> producer;	

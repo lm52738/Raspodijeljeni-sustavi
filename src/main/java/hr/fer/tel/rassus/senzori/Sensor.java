@@ -39,10 +39,10 @@ public class Sensor implements MessageListener{
     private StupidUDPServer udpServer;
     private KafkaConsumer kafkaConsumer;
 
-	private Map<Integer, Registration> sensors; // registracije
-	private List<Reading> readings; // primljena ocitanja
+    private Map<Integer, Registration> sensors; // Stores other registered sensors
+    private List<Reading> readings; // Stores received readings
 	
-	// vremenske oznake
+    // Clocks for time tracking
 	private EmulatedSystemClock systemClock;
 	private Map<Integer, Integer> vectorClock;
 	
@@ -61,19 +61,22 @@ public class Sensor implements MessageListener{
 		this.udpServer = new StupidUDPServer(udpPort, this);
 	}
 	
+	/**
+     * Starts the sensor's main processes: Kafka consumer and UDP server each in separate threads.
+     */
 	public void run() {    
 
 		startTime = System.currentTimeMillis();
 		vectorClock.put(id, 0);
 		
-		// Pokretanje KafkaConsumera u zasebnoj niti
+		// Start KafkaConsumer in a separate thread
         Thread kafkaThread = new Thread(() -> {
             kafkaConsumer.initializeConsumer(id);
             kafkaConsumer.pollMessages();
         });
         kafkaThread.start();
 	    
-		// Pokretanje UDP servera u zasebnoj niti
+        // Start UDP server in a separate thread
         Thread udpThread = new Thread(() -> {
             try {
                 udpServer.start();
@@ -97,15 +100,18 @@ public class Sensor implements MessageListener{
 		return;
 	}
 	
+	/**
+     * Registers the sensor by sending its information to the registration topic.
+     */
 	private void register() {
 
 		System.out.printf("Sensor got a message:(%s : %s)\n",COMMAND, START);
 		
-		// Inicijalizacija Kafka producera
+		// Initialize KafkaProducer for sending the registration message
 	    KafkaProducer kafkaProducer = new KafkaProducer();
 	    kafkaProducer.initializeProducer();
 	    
-	    // posalji registracijsku poruku
+	    // Create and send registration message as JSON
 		try {
 		    Registration registration = new Registration(id, "localhost", udpPort);
 		    
@@ -122,25 +128,32 @@ public class Sensor implements MessageListener{
 		
 	}
 
+	/**
+     * Stops the sensor's work by closing communication channels and printing all readings.
+     */
 	private void stopWorking() {
 		
 		System.out.printf("Sensor got a message:(%s : %s)\n",COMMAND, STOP);
 
-		// zaustavlja se komunikacija
+		// Stop UDP server and Kafka consumer communication
         udpServer.stopServer();
         kafkaConsumer.closeConsumer();
 		
-		// sortirati i ispisati sva ocitanja
+        // Print all collected readings
 		printReadings();
 		
-		// zaustavlja se UDP komunikacija
+		// Stop UDP communciation
 		System.out.println("Sensor shutting down ...");
 		System.exit(0);
 	}
 	
+	/**
+     * Saves the registration details of other sensors from the received message.
+     * 
+     * @param message JSON string containing sensor registration information
+     */
 	private void saveRegistration(String message) {
 		
-		// spremi registraciju cvora
 		try {
 
 			ObjectMapper objectMapper = new ObjectMapper();
@@ -161,9 +174,9 @@ public class Sensor implements MessageListener{
 			e.printStackTrace();
 		}
 		
-
+		
+		// Once all sensors are registered, start UDP communication in a new thread
 		if (messageCounter == sensorCount-1) {
-			// Pokretanje UDP komunikacije u zasebnoj niti
 			Thread udpCommunicationThread = new Thread(() -> {
 				try {
 					udpCommunication();
@@ -176,20 +189,22 @@ public class Sensor implements MessageListener{
 		
 	}
 
+	/**
+     * Manages UDP communication by generating and sending readings to all registered sensors.
+     */
 	private void udpCommunication() throws IOException, ClassNotFoundException, InterruptedException {
 		
-		// Inicijalizacija UDP servera
 		System.out.println("UDP communication started ...");
 		
 		Timer timer = new Timer();
 
-        // ispis ocitanja svakih 5 sekundi
+		// Schedule reading output every 5 seconds
         timer.schedule(new ReadingPrinterTask(), 0, 5 * 1000);
 		
 		while(true) {
 			System.out.println("--------------------------------");
 			
-			// generira vlastito ocitanje i stvara UDP paket
+			// Generate a new reading
 			Double no2 = getNO2();
 			
 			Integer clock = vectorClock.get(id);
@@ -199,7 +214,7 @@ public class Sensor implements MessageListener{
 			Reading reading = new Reading(id, no2, vectorClock, systemClock.currentTimeMillis());
 			System.out.println("New generated reading: " + reading.toString());
 			
-			// šalje ga svim cvorovima u mrezi
+			// Send the reading to all registered sensors
 			for (Registration registration : sensors.values()) {
 				
 				StupidUDPClient udpClient = new StupidUDPClient(registration.getPort());
@@ -213,7 +228,7 @@ public class Sensor implements MessageListener{
 	@Override
 	public void onUdpMessageReceived(Reading reading) {
 		
-		// provjerava primljeni skalar sa vlastitim
+		// Check and synchronize scalar clocks if the received clock is ahead
 		long scalarClock = systemClock.currentTimeMillis();
 		if (reading.getScalarClock() > scalarClock) {
 			System.out.println();
@@ -224,25 +239,26 @@ public class Sensor implements MessageListener{
 			System.out.println();
 		}
 		
-		// uveca svoj sat
+		// Increment local vector clock
 		Integer clock = vectorClock.get(id);
 		clock++;
 		
-		// postavlja primljeni vektor sa svojom novom vrijednoscu
+		// Update the vector clock with the received vector clock and new local clock
 		vectorClock = reading.getVectorClock();
 		vectorClock.put(id, clock);
 		
-		// spremi ocitanja za ispis
+		// Add the reading to the list of collected readings
 		readings.add(reading);		
 	}
 	
-	
+	/**
+     * Timer task to print readings and calculate the average reading every 5 seconds.
+     */
 	class ReadingPrinterTask extends TimerTask {
         @Override
         public void run() {
         	
-        	// nakon svaki 5 sekundi sortirati i ispisati sva ocitanja i njihovu srednju vrijednost
-    		Double average = readings.stream()
+        	Double average = readings.stream()
     				.filter(r -> r.getNo2()!=null)
                     .mapToDouble(Reading::getNo2)
                     .average()
@@ -258,6 +274,9 @@ public class Sensor implements MessageListener{
         }
     }	
 	
+	/**
+     * Sorts and prints readings based on different clock comparisons.
+     */
 	private void printReadings() {
 		
 		Collections.sort(readings, Reading.readingScalarComparator);
@@ -272,16 +291,18 @@ public class Sensor implements MessageListener{
 		System.out.println("Readings sort by both clocks:");
 		readings.stream().forEach(r -> System.out.println(r));
 		
-		// resetirati vrijeme i listu ocitanja
-		readings.clear();
+		readings.clear(); // Clear readings after printing
 	}
 	
+	/**
+     * Reads NO2 value from a CSV file based on elapsed time to simulate sensor data.
+     * 
+     * @return NO2 reading as Double or null if reading fails
+     */
 	public Double getNO2() {
 		
-		long endTime = System.currentTimeMillis();
-		
-		int executionTime = (int) (endTime - startTime);
-	
+		long endTime = System.currentTimeMillis();		
+		int executionTime = (int) (endTime - startTime);	
 		int rowIndex = (executionTime % 100) + 1;
 		
         ClassLoader classLoader = StupidUDPClient.class.getClassLoader();
@@ -296,13 +317,9 @@ public class Sensor implements MessageListener{
     
             List<String[]> data = csvReader.readAll();
             
-            // dohvati red iz readings.csv
             if (rowIndex >= 0 && rowIndex < data.size()) {
                 String[] row = data.get(rowIndex);
-
-                // kreiraj ocitanje na temelju reda
-                Double no2 = (row[4] == null || row[4] == "") ? null : Double.parseDouble(row[4]);
-                
+                Double no2 = (row[4] == null || row[4] == "") ? null : Double.parseDouble(row[4]);     
                 return no2;
             } else {
                 System.out.println("Row index is out of bounds.");
